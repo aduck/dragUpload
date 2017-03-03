@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>dragUploader</title>
+  <style>
+    *{
+      margin:0;
+      padding:0;
+    }
+    .clearfix:after{
+      content:'';
+      display:block;
+      height:0;
+      clear:both;
+      visibility:hidden;
+    }
+    .container{
+      width:980px;
+      margin:auto;
+    }
+    .uploaderArea{
+      width:200px;
+      height:200px;
+      border:1px solid #ccc;
+    }
+    .uploaderPre{margin:15px 0;}
+    .uploaderPre-item{
+      float:left;
+      width:50px;
+      height:50px;
+      line-height:50px;
+      text-align:center;
+      font-size:0;
+      border:1px solid #ccc;
+    }
+    .uploaderPre-item img{
+      max-width:50px;
+      max-height:50px;
+      vertical-align:middle;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!--上传区域-->
+    <div class="uploaderArea" id="uploaderArea"></div>
+
+    <!--预览框-->
+    <div class="uploaderPre clearfix" id="uploaderPre">
+      
+    </div>
+
+    <!--按钮-->
+    <div class="uploaderBtns">
+      <input type="file" name="upload_thumb" id="uploaderThumb" />
+      <input type="button" value="上传" onclick="upfile()" />
+    </div>
+    
+    <!--数据保存-->
+    <input type="hidden" name="thumb" id="thumb" />
+
+    <div id="msg"></div>
+
+  </div>
+  <script src="js/jquery.min.js"></script>
+  <script>
+    let uploaderThumb=document.getElementById('uploaderThumb')
+    let uploaderArea=document.getElementById('uploaderArea')
+    let uploaderPre=document.getElementById('uploaderPre')
+    let uploaders=document.getElementById('thumb') // 隐藏域
+    let upBtn=document.getElementById('uploaderThumb') // 添加按钮
+    let data=[]
+
+    // 拖拽事件
+    uploaderArea.ondragover=function(e){
+      e.preventDefault()
+    }
+    uploaderArea.ondrop=function(e){
+      e.preventDefault()
+      let files=[].slice.call(e.dataTransfer.files)
+      if(!files.length) return
+      files.forEach(file=>{
+        createPreThumb(file)
+      })
+    }
+
+    // 选择文件
+    upBtn.onchange=function(e){
+      let files=[].slice.call(e.target.files)
+      if(!files.length) return
+      files.forEach(file=>{
+        createPreThumb(file)
+      })
+    }
+
+    // 生成缩略图
+    function createPreThumb(file){
+      data.push(file) // 保存数据
+      let fileReader=new FileReader()
+      fileReader.readAsDataURL(file)
+      fileReader.onload=function(){
+        let thumbBox=document.createElement('div')
+        thumbBox.className='uploaderPre-item'
+        let img=document.createElement('img')
+        img.src=fileReader.result
+        thumbBox.appendChild(img)
+        uploaderPre.appendChild(thumbBox)
+      }
+    }
+
+    // 上传文件
+    function upfile(){
+      let xhr=new XMLHttpRequest()
+      let formData=new FormData()
+      data.forEach(file=>{
+        formData.append('thumb',file)
+      })
+      xhr.onprogress=e=>{
+        let msg=document.getElementById('msg')
+        msg.innerHTML=`已上传${(e.loaded/e.total)*100}%`
+      }
+      xhr.open('POST','/upload',true)
+      xhr.send(formData)
+    }    
+  </script>
+</body>
+</html>
